@@ -8,7 +8,7 @@ scope = ["https://spreadsheets.google.com/feeds",
          "https://www.googleapis.com/auth/drive"]
 
 # Load credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name("ebay/cs50-470415-aaf7617c501c.json", scope)
+creds = ServiceAccountCredentials.from_json_keyfile_name("cs50-470415-aaf7617c501c.json", scope)
 
 # Authorize client
 client = gspread.authorize(creds)
@@ -17,11 +17,12 @@ client = gspread.authorize(creds)
 sheet = client.open("test cs50").sheet1  
 
 # Read data
-data = sheet.get_all_records()  # returns list of dicts
+headers = ["OrderID", "BuyerUserID", "Total", "Date"]
+data = sheet.get_all_records(expected_headers=headers)  # returns list of dicts
 print(data)
 
 # Example: read a specific cell
 print(sheet.cell(2, 3).value)  # Row 2, Col 3
 
 # Example: update a cell
-sheet.update_cell(2, 3, "Hello, world!")
+#sheet.update_cell(2, 3, "Hello, world!")
