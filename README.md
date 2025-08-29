@@ -1,22 +1,55 @@
-The purpose of this project is to use the eBay and Google Sheets APIs
-to download my ebay sales data from the site, manipulate that data,
-and then create sales reports to Google Sheets.
+# eBay Store Financial Statment Generator
 
-The program will also download my purchases and populate that data into
-the spreadsheets. Ideally, I would also like for the program to do the
-same from Amazon.
 
-1. Enter a date range
-2. Access ebay sales data and download it.
-3. access ebay purchase data and download it.
-4. ask user if they would like to import more expenses from a csv file
-    if yes, do that (user enters the filename or it can be a CL argument)
-5. manipulate data (determine net profit) and store the data
-6. upload data in a readable format to google sheets
+This program will take my ebay transaction report and also read
+an expense report (.csv file) and manipulate that information into
+a spreadsheet that I can use for my taxes (1099K)
 
-Source Code:
-main.py - main program
-ebay.py - all ebay functions
-sheets.py - all google sheets functions
-.env contains ebay API codes for security purposes (ignored by git)
-.json files give me access to Google's API (ignored by git)
+To use the Google Sheets feature, you will need to obtain your own API Key
+using the following tutorial:
+
+    https://developers.google.com/workspace/sheets/api/quickstart/python
+
+Alternatively, the data can be exported as a .csv file.
+
+Usage: python project.py --sheets  
+            Will create a google sheet with exported data
+
+       python project.py 
+            with no arguments will default to .csv file exports.
+
+## Summary:
+
+This program will automate my process of creating a P&L/Income Statement for my
+ebay store. To export your own data, you can go into the Seller Hub of your eBay account.
+Usually you can get to this by going to My eBay at the top of the eBay home screen.
+
+The program will ask for a date range and gather all the transactions in that date range
+Categories gathered will be orders, shipping labels, refunds, and misc fees.
+
+When doing my taxes, I'm also required to provide all my expenses, not just expenses on ebay.
+Examples would be deductible items like office equipment, internet, phone, fuel/mileage, 
+and any other expense that goes towards the business. These expenses are kept in 
+a seperate csv file. The program will prompt you for the name of the expense csv file and read
+expenses from the given date range from that file. 
+
+Once all the data has been collected, it will then be calculated and formatted. This 
+will be exported as either a .csv file or as a new google sheet. The filename will use 
+the following format:
+
+        ebay_report_YYYYMMDD_to_YYYYMMDD.csv where YYYYMMDD is the start and end date
+
+The report will consider all sales and expenses and provide a report showing gross and net profits
+
+The additional expense report is optional. If you do not wish import additional expenses,
+leave the "Export Name: " field blank.
+
+Google Sheets feature:
+
+To use the Google Sheets feature, the program must be run with the --sheets argument.
+
+    example: python project.py --sheets
+
+For this to work, you will need to log into your own Google account and follow the instructions
+at https://developers.google.com/workspace/sheets/api/quickstart/python to get the key file
+needed to access the Google Sheets API.
