@@ -22,6 +22,13 @@ PAYOUT = 'Payout'
 PURCHASE = 'Purchase'
 
 def main():
+    
+    if len(sys.argv) > 2:
+        sys.exit('Invalid command line arguments')
+        
+    # check cmd line args and get mode
+    google_mode = get_mode()
+        
     #Gather date range and optional expense file name
     try:
         start_date = input('Start date (YYYY-MM-DD): ')
@@ -65,7 +72,10 @@ def main():
     
     # create our output file
     output_file_name = get_output_filename(start_date, end_date)
-    create_output_file(output_file_name, transactions)
+    if google_mode:
+        create_google_spreadsheet(output_file_name, start_date, end_date, order_total, promo_total, refund_total, shipping_total, purchase_total)
+    else:
+        create_output_file(output_file_name, start_date, end_date, order_total, promo_total, refund_total, shipping_total, purchase_total)
         
 def read_transactions(filename, start, end):
     # Reads ebay transaction csv file and returns list of dicts
@@ -100,40 +110,37 @@ def read_transactions(filename, start, end):
         
     return transactions
 
+def create_google_spreadsheet(file, start, end, orders, promo, refunds, shipping, purchases):
+    ...
+
 def format_date(date):
     in_date_format = "%b %d, %Y"
     out_date_format = "%Y-%m-%d"
     date_object = datetime.strptime(date, in_date_format)
     return date_object.strftime(out_date_format)
 
+def get_mode():   
+    if len(sys.argv) == 2:
+        if sys.argv[1] == '--google' or '-g':
+            return True
+        else:
+            return False
+    else:
+        return True
+
 def get_output_filename(start, end):
     return f'ebay_income_statment_{start}_{end}.csv'
 
-def create_output_file(file, transaction_list):
-    try:
-        with open(file, 'w', encoding='utf-8', newline='') as output_file:
-            writer = csv.DictWriter(output_file, fieldnames=['Transaction creation date',
-                                                             'Type',
-                                                             'Order number',
-                                                             'Buyer name',
-                                                             'Item ID',
-                                                             'Transaction ID',
-                                                             'Item title',
-                                                             'Quantity',
-                                                             'Item subtotal',
-                                                             'Shipping and handling',
-                                                             'Seller collected tax',
-                                                             'eBay collected tax',
-                                                             'Final Value Fee - fixed',
-                                                             'Final Value Fee - variable',
-                                                             'Regulatory operating fee',
-                                                             'Deposit processing fee',
-                                                             'Gross transaction amount',
-                                                             'Description'])
-            writer.writeheader()
-            writer.writerows(transaction_list)
-    except Exception:
-        sys.exit('Error writing output file')
+def create_output_file(file, start, end, orders, promo, refunds, shipping, purchases):
+    
+    with open(file, 'w') as output_file:
+        output_file.write(f'{start} to {end}\n\n')
+        output_file.write(f'Total Orders: {orders}\n')
+        output_file.write(f'Total Promo Fees Paid: {promo}\n')
+        output_file.write(f'Total refunds: {refunds}\n')
+        output_file.write(f'Shipping Labels: {shipping}\n')
+        output_file.write(f'Supplies purchased from eBay: {purchases}')
+                
     print(f'File: {file} successfully created')
     
 def separate_list(trans_list, type):
