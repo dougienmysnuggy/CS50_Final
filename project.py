@@ -57,7 +57,7 @@ def main():
     payout_transactions = separate_list(transactions, PAYOUT) # Don't think I really need this, but the data is there
     purchase_transcations = separate_list(transactions, PURCHASE)
     
-    # Placeholder to test the totals
+    # Get totals for income summary
     order_total = round(total_list(order_transactions), ndigits=2)
     promo_total = round(total_list(promo_fee_transactions), ndigits=2)
     refund_total = round(total_list(refund_transcations), ndigits=2)
