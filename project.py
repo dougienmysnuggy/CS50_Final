@@ -11,6 +11,13 @@
 
 import csv, datetime, sys
 
+ORDER = 'Order'
+PROMO = 'Other fee'
+REFUND = 'Refund'
+LABEL = 'Shipping label'
+PAYOUT = 'Payout'
+PURCHASE = 'Purchase'
+
 def main():
     #Gather date range and optional expense file name
     try:
@@ -30,10 +37,32 @@ def main():
     # this list contains all the transactions in the transaction file    
     transactions = read_transactions(input_filename)
     
+    # create a separate list for each type of transaction
+    order_transactions = separate_list(transactions, ORDER)
+    promo_fee_transactions = separate_list(transactions, PROMO)
+    refund_transcations = separate_list(transactions, REFUND)
+    shipping_label_transactions = separate_list(transactions, LABEL)
+    payout_transactions = separate_list(transactions, PAYOUT) # Don't think I really need this, but the data is there
+    purchase_transcations = separate_list(transactions, PURCHASE)
+    
+    # Placeholder to test the totals
+    order_total = total_list(order_transactions)
+    promo_total = total_list(promo_fee_transactions)
+    refund_total = total_list(refund_transcations)
+    shipping_total = total_list(shipping_label_transactions)
+    payout_total = total_list(payout_transactions)
+    purchase_total = total_list(purchase_transcations)
+    
+    print(f'Gross Sales: {order_total}')
+    print(f'Promoted Listing Fees: {promo_total}')
+    print(f'Total Refunds: {refund_total}')
+    print(f'Shipping Lables Purchased: {shipping_total}')
+    print(f'Total Payouts to Bank: {payout_total}')
+    print(f'Total Purchase: {purchase_total}')
+    
     # create our output file
     output_file_name = get_output_filename(start_date, end_date)
     create_output_file(output_file_name, transactions)
-   
         
 def read_transactions(filename):
     # Reads ebay transaction csv file and returns list of dicts
@@ -94,6 +123,20 @@ def create_output_file(file, transaction_list):
     except Exception:
         sys.exit('Error writing output file')
     print(f'File: {file} successfully created')
+    
+def separate_list(trans_list, type):
+    return_list = []
+    for t in trans_list:
+        if t['Type'] == type:
+            return_list.append(t)
+    return return_list
+
+def total_list(list):
+    total = 0
+    for l in list:
+        if not l['Gross transaction amount'] == '--':
+            total += float(l['Gross transaction amount'])
+    return total
 
 def verify_dates(start, end):
     return True
