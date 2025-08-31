@@ -21,6 +21,8 @@ LABEL = 'Shipping label'
 PAYOUT = 'Payout'
 PURCHASE = 'Purchase'
 
+STORE_NAME = 'Fatz Collectibles'  # Change to your store name
+
 def main():
     
     if len(sys.argv) > 2:
@@ -56,26 +58,19 @@ def main():
     purchase_transcations = separate_list(transactions, PURCHASE)
     
     # Placeholder to test the totals
-    order_total = total_list(order_transactions)
-    promo_total = total_list(promo_fee_transactions)
-    refund_total = total_list(refund_transcations)
-    shipping_total = total_list(shipping_label_transactions)
-    payout_total = total_list(payout_transactions)
-    purchase_total = total_list(purchase_transcations)
-    
-    print(f'Gross Sales: {order_total}')
-    print(f'Promoted Listing Fees: {promo_total}')
-    print(f'Total Refunds: {refund_total}')
-    print(f'Shipping Lables Purchased: {shipping_total}')
-    print(f'Total Payouts to Bank: {payout_total}')
-    print(f'Total Purchase: {purchase_total}')
+    order_total = round(total_list(order_transactions), ndigits=2)
+    promo_total = round(total_list(promo_fee_transactions), ndigits=2)
+    refund_total = round(total_list(refund_transcations), ndigits=2)
+    shipping_total = round(total_list(shipping_label_transactions), ndigits=2)
+    payout_total = round(total_list(payout_transactions), ndigits=2)
+    purchase_total = round(total_list(purchase_transcations), ndigits=2)
     
     # create our output file
     output_file_name = get_output_filename(start_date, end_date)
     if google_mode:
-        create_google_spreadsheet(output_file_name, start_date, end_date, order_total, promo_total, refund_total, shipping_total, purchase_total)
+        create_google_spreadsheet(output_file_name, start_date, end_date, order_total, promo_total, refund_total, shipping_total, payout_total, purchase_total)
     else:
-        create_output_file(output_file_name, start_date, end_date, order_total, promo_total, refund_total, shipping_total, purchase_total)
+        create_output_file(output_file_name, start_date, end_date, order_total, promo_total, refund_total, shipping_total, payout_total, purchase_total)
         
 def read_transactions(filename, start, end):
     # Reads ebay transaction csv file and returns list of dicts
@@ -126,20 +121,23 @@ def get_mode():
         else:
             return False
     else:
-        return True
+        return False
 
 def get_output_filename(start, end):
-    return f'ebay_income_statment_{start}_{end}.csv'
+    return f'ebay_income_statment_{start}_{end}.txt'
 
-def create_output_file(file, start, end, orders, promo, refunds, shipping, purchases):
-    
+def create_output_file(file, start, end, orders, promo, refunds, shipping, payouts, purchases):
+    total_expenses = promo + refunds + shipping + purchases
+    net_income = orders + total_expenses #add here because expenses are represented as a negative value
     with open(file, 'w') as output_file:
-        output_file.write(f'{start} to {end}\n\n')
-        output_file.write(f'Total Orders: {orders}\n')
-        output_file.write(f'Total Promo Fees Paid: {promo}\n')
-        output_file.write(f'Total refunds: {refunds}\n')
-        output_file.write(f'Shipping Labels: {shipping}\n')
-        output_file.write(f'Supplies purchased from eBay: {purchases}')
+        output_file.write(f'{STORE_NAME} Income Summary: {start} to {end}\n\n')
+        output_file.write(f'Total Orders: ${orders:,.2f}\n')
+        output_file.write(f'Total Promo Fees Paid: ${promo:,.2f}\n')
+        output_file.write(f'Total refunds: ${refunds:,.2f}\n')
+        output_file.write(f'Shipping Labels: ${shipping:,.2f}\n')
+        output_file.write(f'Supplies purchased from eBay: ${purchases:,.2f}\n\n')
+        output_file.write(f'Net Income: ${net_income:,.2f}\n')
+        output_file.write(f'Total Deposited to Bank: ${payouts:,.2f}')
                 
     print(f'File: {file} successfully created')
     
