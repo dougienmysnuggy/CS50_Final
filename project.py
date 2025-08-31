@@ -9,8 +9,11 @@
 5.) Create the spreadsheet
 '''
 
-import csv, datetime, sys
+import csv, sys
+from datetime import datetime
+#import sheets
 
+# Transaction type constants
 ORDER = 'Order'
 PROMO = 'Other fee'
 REFUND = 'Refund'
@@ -35,7 +38,7 @@ def main():
         sys.exit('Invalid')
     
     # this list contains all the transactions in the transaction file    
-    transactions = read_transactions(input_filename)
+    transactions = read_transactions(input_filename, start_date, end_date)
     
     # create a separate list for each type of transaction
     order_transactions = separate_list(transactions, ORDER)
@@ -64,35 +67,44 @@ def main():
     output_file_name = get_output_filename(start_date, end_date)
     create_output_file(output_file_name, transactions)
         
-def read_transactions(filename):
+def read_transactions(filename, start, end):
     # Reads ebay transaction csv file and returns list of dicts
     transactions = []
     try:
         with open('ebay_transactions.csv', encoding='utf-8') as file:  #change this back to filename variable later
             reader = csv.DictReader(file)
             for row in reader:
-                transactions.append({'Transaction creation date': row['Transaction creation date'],
-                                     'Type': row['Type'],
-                                     'Order number': row['Order number'],
-                                     'Buyer name': row['Buyer name'],
-                                     'Item ID': row['Item ID'],
-                                     'Transaction ID': row['Transaction ID'],
-                                     'Item title': row['Item title'],
-                                     'Quantity': row['Quantity'],
-                                     'Item subtotal': row['Item subtotal'],
-                                     'Shipping and handling': row['Shipping and handling'],
-                                     'Seller collected tax': row['Seller collected tax'],
-                                     'eBay collected tax': row['eBay collected tax'],
-                                     'Final Value Fee - fixed': row['Final Value Fee - fixed'],
-                                     'Final Value Fee - variable': row['Final Value Fee - variable'],
-                                     'Regulatory operating fee': row['Regulatory operating fee'],
-                                     'Deposit processing fee': row['Deposit processing fee'],
-                                     'Gross transaction amount': row['Gross transaction amount'],
-                                     'Description': row['Description']})
+                # need to grab the date of the transaction, see if it's in the range, if so, append to list. 
+                formatted_date = format_date(row['Transaction creation date'])                
+                if start <= formatted_date <= end:
+                    transactions.append({'Transaction creation date': row['Transaction creation date'],
+                                        'Type': row['Type'],
+                                        'Order number': row['Order number'],
+                                        'Buyer name': row['Buyer name'],
+                                        'Item ID': row['Item ID'],
+                                        'Transaction ID': row['Transaction ID'],
+                                        'Item title': row['Item title'],
+                                        'Quantity': row['Quantity'],
+                                        'Item subtotal': row['Item subtotal'],
+                                        'Shipping and handling': row['Shipping and handling'],
+                                        'Seller collected tax': row['Seller collected tax'],
+                                        'eBay collected tax': row['eBay collected tax'],
+                                        'Final Value Fee - fixed': row['Final Value Fee - fixed'],
+                                        'Final Value Fee - variable': row['Final Value Fee - variable'],
+                                        'Regulatory operating fee': row['Regulatory operating fee'],
+                                        'Deposit processing fee': row['Deposit processing fee'],
+                                        'Gross transaction amount': row['Gross transaction amount'],
+                                        'Description': row['Description']})
     except FileNotFoundError:
         sys.exit('Transaction file not found')
         
     return transactions
+
+def format_date(date):
+    in_date_format = "%b %d, %Y"
+    out_date_format = "%Y-%m-%d"
+    date_object = datetime.strptime(date, in_date_format)
+    return date_object.strftime(out_date_format)
 
 def get_output_filename(start, end):
     return f'ebay_income_statment_{start}_{end}.csv'

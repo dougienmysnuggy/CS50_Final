@@ -1,33 +1,19 @@
+from google_auth_oauthlib.flow import InstalledAppFlow
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-import os
 
-# testing google docs api
+SCOPES = ["https://www.googleapis.com/auth/drive",
+          "https://www.googleapis.com/auth/spreadsheets"]
 
-# Define scope for Sheets + Drive
-scope = ["https://spreadsheets.google.com/feeds",
-         "https://www.googleapis.com/auth/drive"]
+# OAuth login flow (this method must be used to create a new sheet)
+# Google is making this more difficult than it should be. I'd 
+# prefer to use a service account, but they give the account so
+# little drive space, I can't create a new sheet.
 
-script_dir = os.path.dirname(__file__)
-service_account_path = os.path.join(script_dir, 'cs50-470415-aaf7617c501c.json')
+flow = InstalledAppFlow.from_client_secrets_file("secret.json", SCOPES)
+creds = flow.run_local_server(port=0)
 
-# Load credentials
-creds = ServiceAccountCredentials.from_json_keyfile_name("cs50-470415-aaf7617c501c.json", scope)
-
-# Authorize client
 client = gspread.authorize(creds)
 
-# Open sheet by name
-sheet = client.create('TESTING')
-sheet.share('leonardw@gmail.com', perm_type='user', role='writer')
-
-# Read data
-#headers = ["OrderID", "BuyerUserID", "Total", "Date"]
-#data = sheet.get_all_records(expected_headers=headers)  # returns list of dicts
-#print(data)
-
-# Example: read a specific cell
-#print(sheet.cell(2, 3).value)  # Row 2, Col 3
-
-# Example: update a cell
-sheet.update_cell(2, 3, "Hello, world!")
+# Now the sheet is created under *your* Google Drive
+spreadsheet = client.create("My New Sheet")
+print(f"Created: {spreadsheet.url}")
