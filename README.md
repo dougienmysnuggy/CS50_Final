@@ -10,17 +10,22 @@ using the following tutorial:
 
     https://developers.google.com/workspace/sheets/api/quickstart/python
 
-Alternatively, the data can be exported as a .csv file.
+Once you have activated the APIs and created the credentials, you will need
+to download the json file and save it in the same directory as project.py
+You should also create a .gitignore so the API credentials don't accidentally
+get uploaded to a public repository. 
 
-Usage: python project.py --sheets  
+Alternatively, the data can be exported as a .txt file.
+
+Usage: python project.py --google  
             Will create a google sheet with exported data
 
        python project.py 
-            with no arguments will default to .csv file exports.
+            with no arguments will default to .txt file exports.
 
 ## Summary:
 
-This program will automate my process of creating a P&L/Income Statement for my
+This program will automate my process of creating a P&L/Income Summary Statement for my
 ebay store. To export your own data, you can go into the Seller Hub of your eBay account.
 Usually you can get to this by going to My eBay at the top of the eBay home screen.
 
@@ -34,7 +39,7 @@ a seperate csv file. The program will prompt you for the name of the expense csv
 expenses from the given date range from that file. 
 
 Once all the data has been collected, it will then be calculated and formatted. This 
-will be exported as either a .csv file or as a new google sheet. The filename will use 
+will be exported as either a .txt file or as a new google sheet. The filename will use 
 the following format:
 
         ebay_report_YYYYMMDD_to_YYYYMMDD.csv where YYYYMMDD is the start and end date
@@ -44,12 +49,13 @@ The report will consider all sales and expenses and provide a report showing gro
 The additional expense report is optional. If you do not wish import additional expenses,
 leave the "Export Name: " field blank.
 
-Google Sheets feature:
+## Google Sheets feature:
 
 To use the Google Sheets feature, the program must be run with the --sheets argument.
 
     example: python project.py --sheets
 
-For this to work, you will need to log into your own Google account and follow the instructions
-at https://developers.google.com/workspace/sheets/api/quickstart/python to get the key file
-needed to access the Google Sheets API.
+Once the program is executed, you will be prompted to log into your Google account. Enter
+your login information and then you will be warned that the application is not verified. Click
+continue on that screen. Click continue again and close the tab. A link to the created 
+Google Spreadsheet will print.
