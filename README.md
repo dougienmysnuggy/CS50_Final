@@ -12,6 +12,9 @@ using the following tutorial:
 
 Once you have activated the APIs and created the credentials, you will need
 to download the json file and save it in the same directory as project.py
+
+    The file should be named "secret.json"
+
 You should also create a .gitignore so the API credentials don't accidentally
 get uploaded to a public repository. 
 
