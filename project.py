@@ -11,6 +11,8 @@
 
 import csv, sys
 from datetime import datetime
+from google_auth_oauthlib.flow import InstalledAppFlow
+import gspread
 #import sheets
 
 # Transaction type constants
@@ -22,6 +24,10 @@ PAYOUT = 'Payout'
 PURCHASE = 'Purchase'
 
 STORE_NAME = 'Fatz Collectibles'  # Change to your store name
+
+#used for google api 
+SCOPES = ["https://www.googleapis.com/auth/drive",
+          "https://www.googleapis.com/auth/spreadsheets"]
 
 def main():
     
@@ -105,8 +111,15 @@ def read_transactions(filename, start, end):
         
     return transactions
 
-def create_google_spreadsheet(file, start, end, orders, promo, refunds, shipping, purchases):
-    ...
+def create_google_spreadsheet(file, start, end, orders, promo, refunds, shipping, payouts, purchases):
+    flow = InstalledAppFlow.from_client_secrets_file("secret.json", SCOPES)
+    creds = flow.run_local_server(port=0)
+
+    client = gspread.authorize(creds)
+
+    # Now the sheet is created under *your* Google Drive
+    spreadsheet = client.create("My New Sheet")
+    print(f"Created: {spreadsheet.url}")
 
 def format_date(date):
     in_date_format = "%b %d, %Y"
