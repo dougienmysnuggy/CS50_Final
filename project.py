@@ -73,12 +73,19 @@ def main():
     payout_total = round(total_list(payout_transactions), ndigits=2)
     purchase_total = round(total_list(purchase_transcations), ndigits=2)
     
+    # Read optional expense file
+    if expense_filename != '':
+        optional_expenses = read_expenses(input_filename, start_date, end_date)
+        optional_expense_total = total_optional_expenses(optional_expenses)  
+    else:
+        optional_expense_total = 0
+          
     # create our output file
     output_file_name = get_output_filename(start_date, end_date, google_mode)
     if google_mode:
-        create_google_spreadsheet(output_file_name, start_date, end_date, order_total, fee_total, promo_total, refund_total, shipping_total, payout_total, purchase_total)
+        create_google_spreadsheet(output_file_name, start_date, end_date, order_total, fee_total, promo_total, refund_total, shipping_total, payout_total, purchase_total, optional_expense_total)
     else:
-        create_output_file(output_file_name, start_date, end_date, order_total, fee_total, promo_total, refund_total, shipping_total, payout_total, purchase_total)
+        create_output_file(output_file_name, start_date, end_date, order_total, fee_total, promo_total, refund_total, shipping_total, payout_total, purchase_total, optional_expense_total)
         
 def read_transactions(filename, start, end):
     # Reads ebay transaction csv file and returns list of dicts
@@ -113,7 +120,33 @@ def read_transactions(filename, start, end):
         
     return transactions
 
-def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, shipping, payouts, purchases):
+def read_expenses(filename, start, end):
+    # Reads ebay transaction csv file and returns list of dicts
+    expenses = []
+    try:
+        with open('expense_report.csv', encoding='utf-8') as file:  #change this back to filename variable later
+            reader = csv.DictReader(file)
+            for row in reader:
+                # need to grab the date of the transaction, see if it's in the range, if so, append to list. 
+                expense_date = datetime.strptime(row['date'], '%Y-%m-%d').date()
+                start = datetime.strptime(start, '%Y-%m-%d').date()
+                end = datetime.strptime(end, '%Y-%m-%d').date()
+                
+                if start <= expense_date <= end:
+                    expenses.append({row['order id'],
+                                     row['items'],
+                                     row['to'],
+                                     row['date'],
+                                     row['total'],
+                                     row['shipping'],
+                                     row['tax']    
+                                    })
+    except FileNotFoundError:
+        sys.exit('Expense file not found')
+    
+    return expenses
+
+def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, shipping, payouts, purchases, expenses):
     flow = InstalledAppFlow.from_client_secrets_file("secret.json", SCOPES)
     creds = flow.run_local_server(port=0)
     client = gspread.authorize(creds)
@@ -138,7 +171,7 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     worksheet.format('B3:B9', {'numberFormat': {'type': 'CURRENCY'}})    
     
     # headings
-    set_column_width(worksheet, 'A', 200)
+    set_column_width(worksheet, 'A', 250)
     worksheet.update_cell(1, 1, f'{STORE_NAME} income summary: {start} to {end}')
     worksheet.update_cell(3, 1, 'Sales')
     worksheet.update_cell(4, 1, 'Final Value Fees')
@@ -146,6 +179,7 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     worksheet.update_cell(6, 1, 'Refunds')
     worksheet.update_cell(7, 1, 'Shipping Labels')
     worksheet.update_cell(8, 1, 'Supplies Purchased from eBay')
+    worksheet.update_cell(9, 1, 'Office Expenses & Supplies')
     
     # insert data
     worksheet.update_cell(3, 2, orders)
@@ -153,7 +187,8 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     worksheet.update_cell(5, 2, promo)
     worksheet.update_cell(6, 2, refunds)
     worksheet.update_cell(7, 2, shipping)
-    worksheet.update_cell(8, 2, purchases)  
+    worksheet.update_cell(8, 2, purchases) 
+    worksheet.update_cell(9, 2, expenses) 
     
     # prints a link you can click on to access the spreadsheet 
     print(f"Created: {spreadsheet.url}")
@@ -189,20 +224,21 @@ def get_output_filename(start, end, google):
     else:
         return f'ebay_income_statment_{start}_{end}.txt'
 
-def create_output_file(file, start, end, orders, promo, refunds, shipping, payouts, purchases):
+def create_output_file(file, start, end, orders, fees, promo, refunds, shipping, payouts, purchases, expenses):
     '''
     Creates standard text file format version of the 
     income summary.
     '''
-    total_expenses = promo + refunds + shipping + purchases
-    net_income = orders + total_expenses #add here because expenses are represented as a negative value
+    total_expenses = (promo + refunds + shipping + purchases) * -1 #convert to positive
+    net_income = orders - total_expenses - expenses
     with open(file, 'w') as output_file:
         output_file.write(f'{STORE_NAME} Income Summary: {start} to {end}\n\n')
         output_file.write(f'Total Orders: ${orders:,.2f}\n')
         output_file.write(f'Total Promo Fees Paid: ${promo:,.2f}\n')
         output_file.write(f'Total refunds: ${refunds:,.2f}\n')
         output_file.write(f'Shipping Labels: ${shipping:,.2f}\n')
-        output_file.write(f'Supplies purchased from eBay: ${purchases:,.2f}\n\n')
+        output_file.write(f'Supplies purchased from eBay: ${purchases:,.2f}\n')
+        output_file.write(f'Office Expenses & Supplies: ${expenses:,.2f}\n\n')
         output_file.write(f'Net Income: ${net_income:,.2f}\n')
         output_file.write(f'Total Deposited to Bank: ${payouts:,.2f}')
                 
@@ -238,6 +274,13 @@ def total_list(list):
         return total, final_value_fees
     else:
         return total
+    
+def total_optional_expenses(list):
+    total = 0
+    for l in list:
+        if l['Total']:
+            total += float(l['Total'])
+    return total
 
 def verify_dates(start, end):
     '''
