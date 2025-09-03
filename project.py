@@ -54,6 +54,9 @@ def main():
                 break
         except ValueError:
             pass
+        
+    if start_date > end_date:
+        sys.exit('Invalid date range')
     
     while True:
         try:
@@ -68,7 +71,7 @@ def main():
     while True:
         try:
             expense_filename = input('Expense Report Filename (leave blank for None):  ')
-            if not verify_filename(expense_filename):
+            if not verify_filename(expense_filename) and expense_filename != '':
                 raise FileNotFoundError('Expense file not found')
             else:
                 break
@@ -87,14 +90,17 @@ def main():
     purchase_transcations = separate_list(transactions, PURCHASE)
     
     # Get totals for income summary
-    order_total, fee_total = total_list(order_transactions)
-    order_total = round(order_total, ndigits=2)
-    fee_total = round(fee_total, ndigits=2)
-    promo_total = round(total_list(promo_fee_transactions), ndigits=2)
-    refund_total = round(total_list(refund_transcations), ndigits=2)
-    shipping_total = round(total_list(shipping_label_transactions), ndigits=2)
-    payout_total = round(total_list(payout_transactions), ndigits=2)
-    purchase_total = round(total_list(purchase_transcations), ndigits=2)
+    try:
+        order_total, fee_total = total_list(order_transactions)
+        order_total = round(order_total, ndigits=2)
+        fee_total = round(fee_total, ndigits=2)
+        promo_total = round(total_list(promo_fee_transactions), ndigits=2)
+        refund_total = round(total_list(refund_transcations), ndigits=2)
+        shipping_total = round(total_list(shipping_label_transactions), ndigits=2)
+        payout_total = round(total_list(payout_transactions), ndigits=2)
+        purchase_total = round(total_list(purchase_transcations), ndigits=2)
+    except TypeError:
+        sys.exit('No records found in given date range')
     
     # Read optional expense file
     if expense_filename != '':
