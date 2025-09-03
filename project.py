@@ -2,9 +2,6 @@
 # Wes Leonard 2025-08-29
 
 # TODO:
-#   Verify Functions
-#   Read optional expense report
-#   Add optional report totals to spreadsheet
 #   Unit test
 #   README
 
@@ -38,20 +35,46 @@ def main():
     google_mode = get_mode()
         
     #Gather date range and optional expense file name
-    try:
-        start_date = input('Start date (YYYY-MM-DD): ')
-        end_date = input('End date (YYYY-MM-DD): ')
-        if not verify_dates(start_date, end_date):
-            raise ValueError('Invalid date format')
-        input_filename = input('Ebay Transaction Filename: ')
-        if not verify_filename(input_filename):
-            raise FileNotFoundError('Transaction file not found')
-        expense_filename = input('Expense Report Filename (leave blank for None):  ')
-        if not verify_filename(expense_filename):
-            raise FileNotFoundError('Expense file not found')
-    except Exception:
-        sys.exit('Invalid')
+    while True:
+        try:
+            start_date = input('Start date (YYYY-MM-DD): ')
+            if not verify_dates(start_date):
+                raise ValueError('Invalid Start Date')
+            else:
+                break
+        except ValueError:
+            pass
+        
+    while True:
+        try:
+            end_date = input('End date (YYYY-MM-DD): ')
+            if not verify_dates(end_date):
+                raise ValueError('Invalid End Date')
+            else:
+                break
+        except ValueError:
+            pass
     
+    while True:
+        try:
+            input_filename = input('Ebay Transaction Filename: ')
+            if not verify_filename(input_filename):
+                raise FileNotFoundError('Transaction file not found')
+            else:
+                break
+        except FileNotFoundError:
+            pass
+        
+    while True:
+        try:
+            expense_filename = input('Expense Report Filename (leave blank for None):  ')
+            if not verify_filename(expense_filename):
+                raise FileNotFoundError('Expense file not found')
+            else:
+                break
+        except FileNotFoundError:
+            pass
+
     # this list contains all the transactions in the transaction file    
     transactions = read_transactions(input_filename, start_date, end_date)
     
@@ -75,7 +98,7 @@ def main():
     
     # Read optional expense file
     if expense_filename != '':
-        optional_expenses = read_expenses(input_filename, start_date, end_date)
+        optional_expenses = read_expenses(expense_filename, start_date, end_date)
         optional_expense_total = total_optional_expenses(optional_expenses)  
     else:
         optional_expense_total = 0
@@ -91,7 +114,7 @@ def read_transactions(filename, start, end):
     # Reads ebay transaction csv file and returns list of dicts
     transactions = []
     try:
-        with open('ebay_transactions.csv', encoding='utf-8') as file:  #change this back to filename variable later
+        with open(filename, encoding='utf-8') as file:  #change this back to filename variable later
             reader = csv.DictReader(file)
             for row in reader:
                 # need to grab the date of the transaction, see if it's in the range, if so, append to list. 
@@ -124,22 +147,19 @@ def read_expenses(filename, start, end):
     # Reads ebay transaction csv file and returns list of dicts
     expenses = []
     try:
-        with open('expense_report.csv', encoding='utf-8') as file:  #change this back to filename variable later
+        with open(filename, encoding='utf-8') as file:  #change this back to filename variable later
             reader = csv.DictReader(file)
             for row in reader:
                 # need to grab the date of the transaction, see if it's in the range, if so, append to list. 
-                expense_date = datetime.strptime(row['date'], '%Y-%m-%d').date()
-                start = datetime.strptime(start, '%Y-%m-%d').date()
-                end = datetime.strptime(end, '%Y-%m-%d').date()
-                
-                if start <= expense_date <= end:
-                    expenses.append({row['order id'],
-                                     row['items'],
-                                     row['to'],
-                                     row['date'],
-                                     row['total'],
-                                     row['shipping'],
-                                     row['tax']    
+                                
+                if start <= row['date'] <= end:
+                    expenses.append({'order id': row['order id'],
+                                     'items': row['items'],
+                                     'to': row['to'],
+                                     'date': row['date'],
+                                     'total': row['total'],
+                                     'shipping': row['shipping'],
+                                     'tax': row['tax']     
                                     })
     except FileNotFoundError:
         sys.exit('Expense file not found')
@@ -150,6 +170,7 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     flow = InstalledAppFlow.from_client_secrets_file("secret.json", SCOPES)
     creds = flow.run_local_server(port=0)
     client = gspread.authorize(creds)
+    expenses *= -1 # conver to negative like rest of the expenses
 
     # Create a new sheet in Google Drive
     spreadsheet = client.create(file)
@@ -167,8 +188,8 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     
     # Bold text for heading lines
     # Currency format for the figures
-    worksheet.format('A3:A9', {'textFormat': {'bold': True, 'fontSize': 12, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}}})
-    worksheet.format('B3:B9', {'numberFormat': {'type': 'CURRENCY'}})    
+    worksheet.format('A3:A11', {'textFormat': {'bold': True, 'fontSize': 12, 'foregroundColor': {'red': 0, 'green': 0, 'blue': 0}}})
+    worksheet.format('B3:B11', {'numberFormat': {'type': 'CURRENCY'}})    
     
     # headings
     set_column_width(worksheet, 'A', 250)
@@ -180,6 +201,7 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     worksheet.update_cell(7, 1, 'Shipping Labels')
     worksheet.update_cell(8, 1, 'Supplies Purchased from eBay')
     worksheet.update_cell(9, 1, 'Office Expenses & Supplies')
+    worksheet.update_cell(11, 1, 'Net Income')
     
     # insert data
     worksheet.update_cell(3, 2, orders)
@@ -189,6 +211,7 @@ def create_google_spreadsheet(file, start, end, orders, fees, promo, refunds, sh
     worksheet.update_cell(7, 2, shipping)
     worksheet.update_cell(8, 2, purchases) 
     worksheet.update_cell(9, 2, expenses) 
+    worksheet.update_cell(11, 2, '=sum(B3:B9)')
     
     # prints a link you can click on to access the spreadsheet 
     print(f"Created: {spreadsheet.url}")
@@ -229,18 +252,20 @@ def create_output_file(file, start, end, orders, fees, promo, refunds, shipping,
     Creates standard text file format version of the 
     income summary.
     '''
-    total_expenses = (promo + refunds + shipping + purchases) * -1 #convert to positive
-    net_income = orders - total_expenses - expenses
+    total_expenses = (promo + refunds + shipping + purchases + fees) 
+    expenses *= -1 # need to convert expenses to negative like other expenses
+    net_income = orders + total_expenses + expenses 
     with open(file, 'w') as output_file:
         output_file.write(f'{STORE_NAME} Income Summary: {start} to {end}\n\n')
         output_file.write(f'Total Orders: ${orders:,.2f}\n')
+        output_file.write(f'Final Value Fees: ${fees:,.2f}\n')
         output_file.write(f'Total Promo Fees Paid: ${promo:,.2f}\n')
         output_file.write(f'Total refunds: ${refunds:,.2f}\n')
         output_file.write(f'Shipping Labels: ${shipping:,.2f}\n')
         output_file.write(f'Supplies purchased from eBay: ${purchases:,.2f}\n')
         output_file.write(f'Office Expenses & Supplies: ${expenses:,.2f}\n\n')
         output_file.write(f'Net Income: ${net_income:,.2f}\n')
-        output_file.write(f'Total Deposited to Bank: ${payouts:,.2f}')
+        # output_file.write(f'Total Deposited to Bank: ${payouts:,.2f}')  <---- don't really need this
                 
     print(f'File: {file} successfully created')
     
@@ -276,23 +301,31 @@ def total_list(list):
         return total
     
 def total_optional_expenses(list):
-    total = 0
+    return_total = 0
     for l in list:
-        if l['Total']:
-            total += float(l['Total'])
-    return total
+        if l['total'] != '':
+            return_total += float(l['total'])
+    return return_total
 
-def verify_dates(start, end):
+def verify_dates(d):
     '''
     Verifies the date input from user
     '''
-    return True
+    try:
+        datetime.strptime(d, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
     
 def verify_filename(f):
     '''
     Verifies the filename inputs from user
     '''
-    return True
+    files = f.split('.')
+    if len(files) == 2 and files[1] == 'csv':
+        return True
+    else:
+        return False
     
 if __name__ == "__main__":
     main()
