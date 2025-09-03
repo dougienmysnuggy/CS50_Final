@@ -1,5 +1,5 @@
 # Cs50 Final Project
-# Wes Leonard 2025-08-29
+# Wes Leonard 
 
 # TODO:
 #   Unit test
