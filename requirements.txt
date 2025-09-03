@@ -2,3 +2,4 @@ google-auth
 google-auth-oauthlib
 gspread    
 gspread-formatting  
+pytest
