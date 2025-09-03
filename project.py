@@ -1,10 +1,6 @@
 # Cs50 Final Project
 # Wes Leonard 
 
-# TODO:
-#   Unit test
-#   README
-
 import csv, sys
 from datetime import datetime
 from google_auth_oauthlib.flow import InstalledAppFlow
