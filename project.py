@@ -5,7 +5,7 @@ import csv, sys
 from datetime import datetime
 from google_auth_oauthlib.flow import InstalledAppFlow
 import gspread
-from gspread_formatting import CellFormat, Color, TextFormat, set_column_width
+from gspread_formatting import set_column_width
 
 
 # Transaction type constants
